@@ -50,7 +50,7 @@ namespace lab2
 
         private static void DoActions()
         {
-            string connString = String.Format("Host=localhost;Username=postgres;Password=1111;Database=lab2");
+            string connString = String.Format("Host=localhost;Username=postgres;Password=16842778;Database=lab2");
             NpgsqlConnection connection = new NpgsqlConnection(connString);
             Console.WriteLine();
 
@@ -164,7 +164,7 @@ namespace lab2
 
         private static void GenerateEntities()
         {
-            string connString = String.Format("Host=localhost;Username=postgres;Password=1111;Database=lab2");
+            string connString = String.Format("Host=localhost;Username=postgres;Password=16842778;Database=lab2");
             NpgsqlConnection connection = new NpgsqlConnection(connString);
 
             try

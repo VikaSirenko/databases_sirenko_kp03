@@ -20,6 +20,16 @@ public class DatabaseContext : DbContext
 
 public class Controller
 {
+    private UserRepository userRepository;
+    private MessageRepository messageRepository;
+    private FolderRepository folderRepository;
+    public Controller()
+    {
+        DatabaseContext databaseContext = new DatabaseContext();
+        userRepository = new UserRepository(databaseContext);
+        messageRepository = new MessageRepository(databaseContext);
+        folderRepository = new FolderRepository(databaseContext);
+    }
 
     public void AddUser()
     {
@@ -28,7 +38,7 @@ public class Controller
         {
             try
             {
-                UserRepository.Insert(user);
+                userRepository.Insert(user);
                 WriteLine("User added");
             }
             catch (Exception ex)
@@ -51,12 +61,12 @@ public class Controller
         bool isUserId = int.TryParse(ReadLine(), out id);
         if (isUserId)
         {
-            User user = UserRepository.GetByUserId(id);
+            User user = userRepository.GetByUserId(id);
             if (user != null)
             {
                 try
                 {
-                    UserRepository.Delete(id);
+                    userRepository.Delete(id);
                     WriteLine("User has been removed from the database");
 
                 }
@@ -95,12 +105,12 @@ public class Controller
 
         if (!string.IsNullOrEmpty(username) || !string.IsNullOrEmpty(fullname))
         {
-            user.user_name = username;
-            user.full_name = fullname;
+            user.User_name = username;
+            user.Full_name = fullname;
             string[] date = dateBirth.Split('-');
             try
             {
-                user.date_of_birth = new System.DateTime(int.Parse(date[0]), int.Parse(date[1]), int.Parse(date[2]));
+                user.Date_of_birth = new System.DateTime(int.Parse(date[0]), int.Parse(date[1]), int.Parse(date[2]));
             }
             catch (System.Exception ex)
             {
@@ -129,16 +139,16 @@ public class Controller
         bool isUserId = int.TryParse(ReadLine(), out id);
         if (isUserId)
         {
-            User user = UserRepository.GetByUserId(id);
+            User user =userRepository.GetByUserId(id);
             if (user != null)
             {
                 user = InputUserData();
                 if (user != null)
                 {
-                    user.id = id;
+                    user.Id = id;
                     try
                     {
-                        UserRepository.Update(user, id);
+                        userRepository.Update(user, id);
                         WriteLine("User data updated");
                     }
                     catch (Exception ex)
@@ -177,21 +187,21 @@ public class Controller
 
         Message message = new Message();
         WriteLine("Enter the ID of the user to whom the message belongs:");
-        bool isUserId = int.TryParse(ReadLine(), out message.user_id);
+        bool isUserId = int.TryParse(ReadLine(), out message.User_id);
         WriteLine("Enter the ID of the folder that will contain the message:");
-        bool isFolderId = int.TryParse(ReadLine(), out message.folder_id);
+        bool isFolderId = int.TryParse(ReadLine(), out message.Folder_id);
         if (isFolderId && isUserId)
         {
-            if (UserRepository.GetByUserId(message.user_id) != null && FolderRepository.GetByFolderId(message.folder_id) != null)
+            if (userRepository.GetByUserId(message.User_id) != null && folderRepository.GetByFolderId(message.Folder_id) != null)
             {
                 WriteLine("Enter the subject of the message");
-                message.message_subject = ReadLine();
+                message.Message_subject = ReadLine();
                 WriteLine("Enter the date the message was sent(in format: yyyy-mm-dd)");
                 string sentAt = ReadLine();
                 string[] date = sentAt.Split('-');
                 try
                 {
-                    message.sent_at = new System.DateTime(int.Parse(date[0]), int.Parse(date[1]), int.Parse(date[2]));
+                    message.Sent_at = new System.DateTime(int.Parse(date[0]), int.Parse(date[1]), int.Parse(date[2]));
                 }
                 catch (System.Exception ex)
                 {
@@ -200,7 +210,7 @@ public class Controller
 
                 try
                 {
-                    MessageRepository.Insert(message);
+                    messageRepository.Insert(message);
                     WriteLine("Message added");
                 }
                 catch (Exception ex)
@@ -230,12 +240,12 @@ public class Controller
         bool isMessageId = int.TryParse(ReadLine(), out id);
         if (isMessageId)
         {
-            Message message = MessageRepository.GetByMessageId(id);
+            Message message = messageRepository.GetByMessageId(id);
             if (message != null)
             {
                 try
                 {
-                    MessageRepository.Delete(id);
+                    messageRepository.Delete(id);
                     WriteLine("Message has been removed from the database");
 
                 }
@@ -265,19 +275,19 @@ public class Controller
         bool isMessageId = int.TryParse(ReadLine(), out id);
         if (isMessageId)
         {
-            Message message = MessageRepository.GetByMessageId(id);
+            Message message = messageRepository.GetByMessageId(id);
             if (message != null)
             {
                 WriteLine("Enter the ID of the folder that will contain the message:");
-                bool isFolderId = int.TryParse(ReadLine(), out message.folder_id);
-                if (isFolderId && FolderRepository.GetByFolderId(message.folder_id) != null)
+                bool isFolderId = int.TryParse(ReadLine(), out message.Folder_id);
+                if (isFolderId && folderRepository.GetByFolderId(message.Folder_id) != null)
                 {
                     WriteLine("Enter the subject of the message");
-                    message.message_subject = ReadLine();
-                    message.id = id;
+                    message.Message_subject = ReadLine();
+                    message.Id = id;
                     try
                     {
-                        MessageRepository.Update(message, id);
+                        messageRepository.Update(message, id);
                         WriteLine("Message data updated");
                     }
                     catch (Exception ex)
@@ -314,19 +324,19 @@ public class Controller
     {
         Folder folder = new Folder();
         WriteLine("Enter the ID of the user to whom the message belongs:");
-        bool isUserId = int.TryParse(ReadLine(), out folder.user_id);
+        bool isUserId = int.TryParse(ReadLine(), out folder.User_id);
         if (isUserId)
         {
-            if (UserRepository.GetByUserId(folder.user_id) != null)
+            if (userRepository.GetByUserId(folder.User_id) != null)
             {
                 WriteLine("Enter a name for the folder");
-                folder.folder_name = ReadLine();
+                folder.Folder_name = ReadLine();
                 WriteLine("Enter a name for the folder(in format: yyyy-mm-dd)");
                 string createdAt = ReadLine();
                 string[] date = createdAt.Split('-');
                 try
                 {
-                    folder.date_of_creation = new System.DateTime(int.Parse(date[0]), int.Parse(date[1]), int.Parse(date[2]));
+                    folder.Date_of_creation = new System.DateTime(int.Parse(date[0]), int.Parse(date[1]), int.Parse(date[2]));
                 }
                 catch (System.Exception ex)
                 {
@@ -335,7 +345,7 @@ public class Controller
 
                 try
                 {
-                    FolderRepository.Insert(folder);
+                    folderRepository.Insert(folder);
                     WriteLine("Folder added");
                 }
                 catch (Exception ex)
@@ -367,12 +377,12 @@ public class Controller
         bool isFolderId = int.TryParse(ReadLine(), out id);
         if (isFolderId)
         {
-            Folder folder = FolderRepository.GetByFolderId(id);
+            Folder folder = folderRepository.GetByFolderId(id);
             if (folder != null)
             {
                 try
                 {
-                    FolderRepository.Delete(id);
+                    folderRepository.Delete(id);
                     WriteLine("Folder has been removed from the database");
 
                 }
@@ -403,15 +413,15 @@ public class Controller
         bool isFolderId = int.TryParse(ReadLine(), out id);
         if (isFolderId)
         {
-            Folder folder = FolderRepository.GetByFolderId(id);
+            Folder folder = folderRepository.GetByFolderId(id);
             if (folder != null)
             {
-                folder.id = id;
+                folder.Id = id;
                 WriteLine("Enter a new folder name:");
-                folder.folder_name = ReadLine();
+                folder.Folder_name = ReadLine();
                 try
                 {
-                    FolderRepository.Update(folder, id);
+                    folderRepository.Update(folder, id);
                     WriteLine("Folder data updated");
 
                 }
