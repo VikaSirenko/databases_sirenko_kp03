@@ -5,7 +5,7 @@ namespace db3
         public long id;
         public string username;
         public string address;
-        public string phone_number;
+        public string  phone_number;
         public Customer()
         {
             this.id = default;
@@ -23,7 +23,7 @@ namespace db3
 
         public override string ToString()
         {
-            return $"[{id}] | User name:'{username}' | Address: '{address}'";
+            return $"[{id}] | User name:'{username}' | Address: '{address} | Phone number: {phone_number}'";
         }
 
     }

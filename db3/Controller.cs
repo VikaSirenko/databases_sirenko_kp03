@@ -2,6 +2,7 @@ using System;
 using static System.Console;
 using MySqlConnector;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace db3
 {
@@ -13,7 +14,7 @@ namespace db3
         private OrderRepository orderRepository;
         public Controller()
         {
-            MySqlConnection connection = new MySqlConnection("Server=localhost;User ID=root;Password=password;Database=db3");
+            MySqlConnection connection = new MySqlConnection("Server=localhost;User ID=root;Password=16842778;Database=db3");
             customerRepository = new CustomerRepository(connection);
             purchaseRepository = new PurchaseRepository(connection);
             productRepository = new ProductRepository(connection);
@@ -27,14 +28,14 @@ namespace db3
             customer.username = ReadLine();
             WriteLine("Enter the customers's address");
             customer.address = ReadLine();
-            WriteLine("Enter the customers's phone number");
-            customer.phone_number = ReadLine();
-            if (!String.IsNullOrEmpty(customer.username) && !String.IsNullOrEmpty(customer.address) && !String.IsNullOrEmpty(customer.phone_number))
+            WriteLine("Enter the customers's phone number (the number consists of 10 digits)");
+            customer.phone_number = CheckPhoneNumber(ReadLine()).ToString();
+            if (!String.IsNullOrEmpty(customer.username) && !String.IsNullOrEmpty(customer.address) && customer.phone_number != "0")
             {
                 try
                 {
-                    customerRepository.Insert(customer);
-                    WriteLine($"Customer added to the database");
+                    customer.id = (long)customerRepository.Insert(customer);
+                    WriteLine($"Customer added to the database with id [{customer.id}]");
                 }
                 catch (Exception ex)
                 {
@@ -46,6 +47,35 @@ namespace db3
             {
                 WriteLine("Incorrectly filled in information about the customer");
             }
+        }
+
+        public int CheckPhoneNumber(string phone_number)
+        {
+            int number;
+            bool isNumber = int.TryParse(phone_number, out number);
+            if (isNumber)
+            {
+                int count = 0;
+                int checkN = number;
+                while (checkN != 0)
+                {
+                    checkN = checkN / 10;
+                    count++;
+                }
+                if (count == 10)
+                {
+                    return number;
+                }
+                else
+                {
+                    return default;
+                }
+            }
+            else
+            {
+                throw new Exception("Еhe phone number must contain only numbers");
+            }
+
         }
 
         public void DeleteCustomer()
@@ -85,8 +115,8 @@ namespace db3
                 WriteLine("Enter the customers's address");
                 customer.address = ReadLine();
                 WriteLine("Enter the customers's phone number");
-                customer.phone_number = ReadLine();
-                if (!String.IsNullOrEmpty(customer.username) && !String.IsNullOrEmpty(customer.address) && !String.IsNullOrEmpty(customer.phone_number))
+                customer.phone_number = CheckPhoneNumber(ReadLine()).ToString();
+                if (!String.IsNullOrEmpty(customer.username) && !String.IsNullOrEmpty(customer.address) && customer.phone_number != "0")
                 {
                     try
                     {
@@ -139,6 +169,29 @@ namespace db3
             }
 
         }
+
+
+        public void FindCustomer()
+        {
+            WriteLine("Enter the substring of customer username you want to find");
+            string user_name = ReadLine();
+            List<Customer> customers = customerRepository.FindCustomer(user_name);
+            if (customers.Count != 0)
+            {
+                foreach (Customer c in customers)
+                {
+                    WriteLine($"Customer: {c.ToString()} ");
+                }
+
+            }
+            else
+            {
+                WriteLine("Customers not found");
+            }
+
+
+        }
+
 
         public void AddProduct()
         {
@@ -263,6 +316,58 @@ namespace db3
 
         }
 
+        public void FindProductByName()
+        {
+            WriteLine("Enter the substring of product you want to find");
+            string product_name = ReadLine();
+            List<Product> products = productRepository.FindProduct(product_name);
+            if (products.Count != 0)
+            {
+                foreach (Product p in products)
+                {
+                    WriteLine($"Product: {p.ToString()} ");
+                }
+
+            }
+            else
+            {
+                WriteLine("Products not found");
+            }
+
+        }
+
+        public void FilterProductByPrice()
+        {
+            WriteLine("Enter the minimum price");
+            double min_price;
+            bool isMin = double.TryParse(ReadLine(), out min_price);
+            WriteLine("Enter the maximum price");
+            double max_price;
+            bool isMax = double.TryParse(ReadLine(), out max_price);
+            if (isMin && isMax && min_price > 0 && max_price > 0 && min_price < max_price)
+            {
+                List<Product> products = productRepository.FilterByPrice(min_price, max_price);
+                if (products.Count != 0)
+                {
+                    foreach (Product p in products)
+                    {
+                        WriteLine($"Product: {p.ToString()} ");
+                    }
+
+                }
+                else
+                {
+                    WriteLine("Products not found");
+                }
+            }
+            else
+            {
+                WriteLine("Data entered incorrectly");
+            }
+
+
+        }
+
         public void AddOrder()
         {
             WriteLine("Enter your customer ID:");
@@ -345,8 +450,8 @@ namespace db3
             {
                 try
                 {
-                    orderRepository.Delete(id);
                     purchaseRepository.DeleteAllByOrderId(id);
+                    orderRepository.Delete(id);
                     WriteLine("Order removed from database");
                 }
                 catch (Exception ex)
@@ -417,7 +522,210 @@ namespace db3
 
         public void GenerateOrder()
         {
+            WriteLine("Enter the number of orders you want to generate");
+            int count;
+            bool isCount = int.TryParse(ReadLine(), out count);
+            if (isCount && count > 0)
+            {
+                try
+                {
+                    while (count != 0)
+                    {
+                        Purchase purchase = new Purchase();
+                        Product product = productRepository.GetRandomProduct();
+                        purchase.product_id = product.id;
+                        orderRepository.Generate(product);
+                        purchase.order_id = orderRepository.GetLastOrder().id;
+                        purchaseRepository.Insert(purchase);
+                        count--;
+                    }
+                    WriteLine("Orders generated");
+                }
+                catch (Exception ex)
+                {
+                    WriteLine("Failed to generate orders");
+                    WriteLine("ERROR:  " + ex.Message);
+                }
+            }
+            else
+            {
+                WriteLine("The number of orders to be generated is incorrect");
+            }
+
 
         }
+
+        public void AddProductToOrder()
+        {
+            WriteLine("Enter the order ID to which you want to add the product");
+            long order_id;
+            bool isOrderId = long.TryParse(ReadLine(), out order_id);
+            if (isOrderId && orderRepository.OrderExists(order_id))
+            {
+                WriteLine("Enter the ID of the product you want to add to the order");
+                long product_id;
+                bool isProductId = long.TryParse(ReadLine(), out product_id);
+                if (isProductId && productRepository.ProductExists(product_id))
+                {
+                    try
+                    {
+                        Purchase purchase = new Purchase();
+                        purchase.order_id = order_id;
+                        purchase.product_id = product_id;
+                        purchaseRepository.Insert(purchase);
+                        Order order = orderRepository.GetOrderById(order_id);
+                        Product product = productRepository.GetProductById(product_id);
+                        order.order_price = order.order_price + product.price;
+                        orderRepository.Update(order, order_id);
+                        WriteLine("The product has been added to the order");
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteLine("The product cannot be added to the order");
+                        WriteLine("ERROR:  " + ex.Message);
+                    }
+                }
+                else
+                {
+                    WriteLine("The product id is set incorrectly or the product does not exist");
+
+                }
+
+            }
+            else
+            {
+                WriteLine("ID was entered incorrectly or the order does not exist");
+            }
+
+
+        }
+
+        public void FindCustomerOrders()
+        {
+            WriteLine("Enter the ID of the customer of the order you want to find");
+            int user_id;
+            bool isUserId = int.TryParse(ReadLine(), out user_id);
+            if (isUserId && customerRepository.CustomerExists(user_id))
+            {
+                List<Order> orders = orderRepository.FindCustomerOrders(user_id);
+                if (orders.Count != 0)
+                {
+                    foreach (Order o in orders)
+                    {
+
+                        WriteLine($"Order: {o.ToString()} ");
+                        List<Product> products = productRepository.GetListByOrderId(o.id);
+                        foreach (Product p in products)
+                        {
+                            WriteLine($"------ Product: {p.ToString()}");
+                        }
+                    }
+                }
+                else
+                {
+                    WriteLine("Products not found");
+                }
+
+            }
+            else
+            {
+                WriteLine("The customer ID was entered incorrectly or does not exist");
+            }
+
+        }
+
+        public void FilterOrdersByPeriod()
+        {
+            WriteLine("Enter the start date (in format:yyyy-mm-dd)");
+            DateTime startDate;
+            bool isStartDate = DateTime.TryParse(ReadLine(), out startDate);
+            WriteLine("Enter the end date (in format:yyyy-mm-dd)");
+            DateTime endDate;
+            bool isEndDate = DateTime.TryParse(ReadLine(), out endDate);
+            if (isStartDate && isEndDate && startDate < endDate)
+            {
+                List<Order> orders = orderRepository.FilterByDate(startDate, endDate);
+                if (orders.Count != 0)
+                {
+                    foreach (Order o in orders)
+                    {
+                        WriteLine($"Order: {o.ToString()} ");
+                        List<Product> products = productRepository.GetListByOrderId(o.id);
+                        foreach (Product p in products)
+                        {
+                            WriteLine($"------ Product: {p.ToString()}");
+                        }
+                    }
+                }
+                else
+                {
+                    WriteLine("Products not found");
+                }
+            }
+            else
+            {
+                WriteLine("The data is set incorrectly");
+            }
+        }
+
+        public void GetStatisticsOnOrders()
+        {
+            WriteLine("Enter the start date (in format:yyyy-mm-dd)");
+            DateTime startDate;
+            bool isStartDate = DateTime.TryParse(ReadLine(), out startDate);
+            WriteLine("Enter the end date (in format:yyyy-mm-dd)");
+            DateTime endDate;
+            bool isEndDate = DateTime.TryParse(ReadLine(), out endDate);
+            if (isStartDate && isEndDate && startDate < endDate)
+            {
+                WriteLine("Enter a name to save the image");
+                string name= ReadLine().Trim();
+                string saveFile = "./orders/"+name+".png";
+                Statistics.GenereteImage(orderRepository, startDate, endDate, saveFile);
+                WriteLine($"Image with order statistics by time period saved as: [{saveFile}]");
+            }
+            else
+            {
+                WriteLine("The data is set incorrectly");
+            }
+
+        }
+
+        public void GetProductStatistics()
+        {
+            Dictionary<int, int> dict = Statistics.ShowTopTenProducts(productRepository, purchaseRepository);
+
+            int[] counts = new int[dict.Count];
+            Product[] products = new Product[dict.Count];
+            int i = 0;
+            foreach (KeyValuePair<int, int> keyValue in dict)
+            {
+                products[i] = productRepository.GetProductById(keyValue.Key);
+                counts[i] = keyValue.Value;
+                i++;
+            }
+            WriteLine();
+            WriteLine("Top 10 products:");
+            if (dict.Count > 10)
+            {
+                for (int j = products.Count() - 1; j >= products.Count() - 10; j--)
+                {
+                    Console.WriteLine($"Number of product orders: [{counts[j]}] | Product : [{products[j].product_name}] | Price: {products[j].price}");
+                }
+            }
+            else if (dict.Count > 0 && dict.Count <= 10)
+            {
+                for (int j = products.Count() - 1; j >= 0; j--)
+                {
+                    Console.WriteLine($"Number of product orders: [{counts[j]}] | Product : [{products[j].product_name}] | Price: {products[j].price}");
+                }
+            }
+            else
+            {
+                Console.WriteLine("No products found");
+            }
+
+        }
+
     }
 }

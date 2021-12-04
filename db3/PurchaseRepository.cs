@@ -1,6 +1,6 @@
 using System;
 using MySqlConnector;
-
+using System.Collections.Generic;
 
 namespace db3
 {
@@ -71,8 +71,8 @@ namespace db3
             try
             {
                 purchase.id=reader.GetInt32(0);
-                purchase.order_id=reader.GetInt32(1);
-                purchase.product_id=reader.GetInt32(2);
+                purchase.order_id=reader.GetInt32(2);
+                purchase.product_id=reader.GetInt32(1);
                 return purchase;
             }
                catch (Exception ex)
@@ -87,7 +87,7 @@ namespace db3
         {
             connection.Open();
             MySqlCommand command = connection.CreateCommand();
-            command.CommandText = $@"INSERT into purchase (product_id, order_id ) 
+            command.CommandText = $@"INSERT into purchases (product_id, order_id ) 
             SELECT DISTINCT ON () product_id , order_id FROM   
             (SELECT id as product_id FROM products ORDER BY random() LIMIT {numberOfPurchase} ) as result1,
             (SELECT id as order_id FROM orders ORDER BY random() LIMIT {numberOfPurchase} ) as result2";
@@ -100,7 +100,7 @@ namespace db3
         {
             connection.Open();
             MySqlCommand command = connection.CreateCommand();
-            command.CommandText = @"DELETE FROM purchase WHERE order_id=@order_id";
+            command.CommandText = @"DELETE FROM purchases WHERE order_id=@order_id";
             command.Parameters.AddWithValue("@order_id", orderId);
             int nChanges = command.ExecuteNonQuery();
             connection.Close();
@@ -111,7 +111,7 @@ namespace db3
         {
             connection.Open();
             MySqlCommand command = connection.CreateCommand();
-            command.CommandText = @"DELETE FROM purchase WHERE order_id=@order_id AND product_id=@product_id";
+            command.CommandText = @"DELETE FROM purchases WHERE order_id=@order_id AND product_id=@product_id";
             command.Parameters.AddWithValue("@order_id", orderId);
             command.Parameters.AddWithValue("@product_id", productId);
             int nChanges = command.ExecuteNonQuery();
@@ -125,11 +125,29 @@ namespace db3
         {
             connection.Open();
             MySqlCommand command = connection.CreateCommand();
-            command.CommandText = @"SELECT COUNT(*) FROM purchase WHERE order_id=@order_id";
+            command.CommandText = @"SELECT COUNT(*) FROM purchases WHERE order_id=@order_id";
             command.Parameters.AddWithValue("@order_id", order_id);
             long count = (long)command.ExecuteScalar();
             connection.Close();
             return count;
+        }
+
+         public List<Purchase> GetAllPurchase()
+        {
+            connection.Open();
+            MySqlCommand command = connection.CreateCommand();
+            command.CommandText = @"SELECT * FROM purchases ";
+            MySqlDataReader reader = command.ExecuteReader();
+            List<Purchase> purchasesList = new List<Purchase>();
+            while (reader.Read())
+            {
+                Purchase purchase = ParsePurchase(reader);
+                purchasesList.Add(purchase);
+            }
+            reader.Close();
+            connection.Close();
+            return purchasesList;
+
         }
 
 

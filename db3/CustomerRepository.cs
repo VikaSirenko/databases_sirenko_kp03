@@ -1,6 +1,6 @@
 using System;
 using MySqlConnector;
-
+using System.Collections.Generic;
 
 namespace db3
 {
@@ -40,7 +40,7 @@ namespace db3
 
 
         //adds a new customer to the database
-        public void Insert(Customer customer)
+        public ulong Insert(Customer customer)
         {
             connection.Open();
 
@@ -48,12 +48,14 @@ namespace db3
             command.CommandText =
                 @"
              INSERT INTO customers (username, address, phone_number)
-             VALUES (@username, @address, @phone_number)
-             ";
+             VALUES (@username, @address, @phone_number);
+             SELECT LAST_INSERT_ID();";
             command.Parameters.AddWithValue("@username", customer.username);
             command.Parameters.AddWithValue("@address", customer.address);
             command.Parameters.AddWithValue("@phone_number", customer.phone_number);
+            ulong newId = (ulong)command.ExecuteScalar();
             connection.Close();
+            return newId;
         }
 
 
@@ -114,7 +116,7 @@ namespace db3
             Customer customer = new Customer();
             try
             {
-                customer.id = reader.GetInt32(0);
+                customer.id = reader.GetInt64(0);
                 customer.username = reader.GetString(1);
                 customer.address = reader.GetString(2);
                 customer.phone_number = reader.GetString(3);
@@ -126,11 +128,7 @@ namespace db3
                 Console.WriteLine("ERROR:  " + ex.Message);
                 return null;
             }
-
-
-
         }
-
 
 
 
@@ -141,9 +139,29 @@ namespace db3
             command.CommandText = @"INSERT into customers (username, address, phone_number)
                SELECT SUBSTR(MD5(RAND()), 1, 8) AS randomString,
                SUBSTR(MD5(RAND()), 1, 8) AS randomString,
-               LPAD(FLOOR(RAND() * 999999999.99), 9, '0') AS randomString ";
+               LPAD(FLOOR(RAND() * 9999999999.99), 10, '0') AS randomString ";
             int res = command.ExecuteNonQuery();
             connection.Close();
+        }
+
+
+        public List<Customer> FindCustomer(string user_name)
+        {
+            connection.Open();
+            MySqlCommand command = connection.CreateCommand();
+            command.CommandText = @"SELECT * FROM customers WHERE username LIKE CONCAT('%', @username, '%'); ";
+            command.Parameters.AddWithValue("@username", user_name);
+            MySqlDataReader reader = command.ExecuteReader();
+            List<Customer> customersList = new List<Customer>();
+            while (reader.Read())
+            {
+                Customer customer = ParseCustomer(reader);
+                customersList.Add(customer);
+            }
+            reader.Close();
+            connection.Close();
+            return customersList;
+
         }
     }
 }
