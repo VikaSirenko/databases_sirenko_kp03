@@ -14,22 +14,6 @@ namespace db3
         }
 
 
-
-        //checks if the purchase exists by his ID 
-        public bool PurchaseExists(long id)
-        {
-            connection.Open();
-            MySqlCommand command = connection.CreateCommand();
-            command.CommandText = @"SELECT * FROM purchases WHERE id=@id";
-            command.Parameters.AddWithValue("$id", id);
-            MySqlDataReader reader = command.ExecuteReader();
-            bool result = reader.Read();
-            connection.Close();
-            return result;
-
-        }
-
-
         //adds a new purchase to the database
         public void Insert(Purchase purchase)
         {
@@ -45,21 +29,6 @@ namespace db3
             command.Parameters.AddWithValue("@order_id", purchase.order_id);
             ulong newId = (ulong)command.ExecuteScalar();
             connection.Close();
-        }
-
-
-
-
-        //deletes the purchase by his ID
-        public bool Delete(long id)
-        {
-            connection.Open();
-            MySqlCommand command = connection.CreateCommand();
-            command.CommandText = @"DELETE FROM purchases WHERE id=@id";
-            command.Parameters.AddWithValue("@id", id);
-            int nChanges = command.ExecuteNonQuery();
-            connection.Close();
-            return nChanges == 1;
         }
 
 
@@ -81,18 +50,6 @@ namespace db3
                 return null;
             }
 
-        }
-
-        public void Generate(int numberOfPurchase)
-        {
-            connection.Open();
-            MySqlCommand command = connection.CreateCommand();
-            command.CommandText = $@"INSERT into purchases (product_id, order_id ) 
-            SELECT DISTINCT ON () product_id , order_id FROM   
-            (SELECT id as product_id FROM products ORDER BY random() LIMIT {numberOfPurchase} ) as result1,
-            (SELECT id as order_id FROM orders ORDER BY random() LIMIT {numberOfPurchase} ) as result2";
-            int res = command.ExecuteNonQuery();
-            connection.Close();
         }
 
 

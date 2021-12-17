@@ -48,26 +48,6 @@ namespace db3
         }
 
 
-        //finds the product in the database by his product_name and returns it
-        public Product GetProduct(string product_name)
-        {
-            connection.Open();
-            MySqlCommand command = connection.CreateCommand();
-            command.CommandText = @"SELECT * FROM products WHERE product_name = @product_name ";
-            command.Parameters.AddWithValue("@product_name", product_name);
-            MySqlDataReader reader = command.ExecuteReader();
-            if (reader.Read())
-            {
-                Product product = ParseProduct(reader);
-                connection.Close();
-                return product;
-            }
-            reader.Close();
-            connection.Close();
-            return null;
-
-        }
-
         public Product GetProductById(long id)
         {
             connection.Open();

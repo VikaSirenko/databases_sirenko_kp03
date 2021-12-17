@@ -12,17 +12,6 @@ namespace db3
             this.connection = connection;
         }
 
-        //returns the number of customers in the database
-        public long GetCount()
-        {
-            connection.Open();
-            MySqlCommand command = connection.CreateCommand();
-            command.CommandText = @"SELECT COUNT(*) FROM customers";
-            long count = (long)command.ExecuteScalar();
-            connection.Close();
-            return count;
-
-        }
 
         //checks if the customer exists by his ID 
         public bool CustomerExists(long id)
@@ -56,27 +45,6 @@ namespace db3
             ulong newId = (ulong)command.ExecuteScalar();
             connection.Close();
             return newId;
-        }
-
-
-        //finds the customer in the database by his username  and returns it
-        public Customer GetCustomer(string username)
-        {
-            connection.Open();
-            MySqlCommand command = connection.CreateCommand();
-            command.CommandText = @"SELECT * FROM customer WHERE username = @username ";
-            command.Parameters.AddWithValue("@username", username);
-            MySqlDataReader reader = command.ExecuteReader();
-            if (reader.Read())
-            {
-                Customer customer = ParseCustomer(reader);
-                connection.Close();
-                return customer;
-            }
-            reader.Close();
-            connection.Close();
-            return null;
-
         }
 
 
