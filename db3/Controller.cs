@@ -3,7 +3,7 @@ using static System.Console;
 using MySqlConnector;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.IO;
 namespace db3
 {
     public class Controller
@@ -679,8 +679,12 @@ namespace db3
             if (isStartDate && isEndDate && startDate < endDate)
             {
                 WriteLine("Enter a name to save the image");
-                string name= ReadLine().Trim();
-                string saveFile = "./orders/"+name+".png";
+                string name = ReadLine().Trim();
+                if (!Directory.Exists("./orders"))
+                {
+                    Directory.CreateDirectory("./orders");
+                }
+                string saveFile = "./orders/" + name + ".png";
                 Statistics.GenereteImage(orderRepository, startDate, endDate, saveFile);
                 WriteLine($"Image with order statistics by time period saved as: [{saveFile}]");
             }
@@ -693,8 +697,15 @@ namespace db3
 
         public void GetProductStatistics()
         {
-            Dictionary<int, int> dict = Statistics.ShowTopTenProducts(productRepository, purchaseRepository);
-
+            WriteLine("Enter a name to save the image");
+            string name = ReadLine().Trim();
+            if (!Directory.Exists("./products"))
+            {
+                Directory.CreateDirectory("./products");
+            }
+            string saveFile = "./products/" + name + ".png";
+            Dictionary<int, int> dict = Statistics.GetTopTenProducts(productRepository, purchaseRepository);
+            Statistics.GenerateGraphicForTopProducts(dict, saveFile, productRepository);
             int[] counts = new int[dict.Count];
             Product[] products = new Product[dict.Count];
             int i = 0;
@@ -705,13 +716,16 @@ namespace db3
                 i++;
             }
             WriteLine();
-            WriteLine("Top 10 products:");
+            WriteLine("Favorite products of customers:");
             if (dict.Count > 10)
             {
                 for (int j = products.Count() - 1; j >= products.Count() - 10; j--)
                 {
                     Console.WriteLine($"Number of product orders: [{counts[j]}] | Product : [{products[j].product_name}] | Price: {products[j].price}");
                 }
+                WriteLine();
+                WriteLine($"Images with statistics of products by number of orders saved as: [{saveFile}]");
+
             }
             else if (dict.Count > 0 && dict.Count <= 10)
             {
@@ -719,6 +733,9 @@ namespace db3
                 {
                     Console.WriteLine($"Number of product orders: [{counts[j]}] | Product : [{products[j].product_name}] | Price: {products[j].price}");
                 }
+                WriteLine();
+                WriteLine($"Images with statistics of products by number of orders saved as: [{saveFile}]");
+
             }
             else
             {

@@ -64,7 +64,6 @@ namespace db3
             List<Order> orderList = orderRepository.FilterByDate(firstDay, lastDay);
             for (int i = 0; i < years.Length; i++)
             {
-
                 int ordersCount = default;
                 if (orderList.Count != 0)
                 {
@@ -91,7 +90,7 @@ namespace db3
         }
 
 
-        public static Dictionary<int, int> ShowTopTenProducts(ProductRepository productRepository, PurchaseRepository purchaseRepository)
+        public static Dictionary<int, int> GetTopTenProducts(ProductRepository productRepository, PurchaseRepository purchaseRepository)
         {
 
             Dictionary<int, int> dict = new Dictionary<int, int>();
@@ -109,6 +108,50 @@ namespace db3
 
             dict = dict.OrderBy(pair => pair.Value).ToDictionary(pair => pair.Key, pair => pair.Value);
             return dict;
+        }
+
+
+        public static void GenerateGraphicForTopProducts(Dictionary<int, int> dict, string saveFile, ProductRepository productRepository)
+        {
+            double[] counts = new double[dict.Count];
+            string[] products = new string[dict.Count];
+            int i = dict.Count;
+            foreach (KeyValuePair<int, int> keyValue in dict)
+            {
+                products[i - 1] = productRepository.GetProductById(keyValue.Key).product_name;
+                counts[i - 1] = keyValue.Value;
+                i--;
+
+            }
+
+            var plt = new ScottPlot.Plot(1000, 1000);
+
+            if (dict.Count > 10)
+            {
+                double[] tenCounts = new double[10];
+                string[] tenProducts = new string[10];
+                for (int j = 0; j < 10; j++)
+                {
+                    tenCounts[j] = counts[j];
+                    tenProducts[j] = products[j];
+                }
+                double[] xs = DataGen.Consecutive(tenProducts.Length);
+                plt.PlotScatter(xs, tenCounts, label: "Products");
+                plt.Legend();
+                plt.Ticks(xTickRotation: 0);
+                plt.XTicks(xs, tenProducts);
+                plt.SaveFig(saveFile);
+            }
+            else if (dict.Count > 0 && dict.Count <= 10)
+            {
+                double[] xs = DataGen.Consecutive(products.Length);
+                plt.PlotScatter(xs, counts, label: "Products");
+                plt.Legend();
+                plt.Ticks(xTickRotation: 0);
+                plt.XTicks(xs, products);
+                plt.SaveFig(saveFile);
+            }
+
         }
     }
 }
