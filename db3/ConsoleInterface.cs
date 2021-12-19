@@ -18,6 +18,7 @@ namespace db3
 
                     WriteLine();
                     WriteLine("What you want to do? :'interactEntity' or 'showStatistics' or 'exit'");
+                    WriteLine();
                     string command = ReadLine();
                     if (command.Trim() == "interactEntity")
                     {
@@ -44,11 +45,12 @@ namespace db3
                                     WriteLine("Such a command does not exist, please try again");
                                     break;
                             }
+                            WriteLine();
                         }
                     }
                     else if (command.Trim() == "showStatistics")
                     {
-                        WriteLine("What statistics you want to get: 'orderStat' / 'productStat' ");
+                        WriteLine("What statistics you want to get: 'orderStat' / 'productStat'/ 'prediction'");
                         command = ReadLine().Trim();
                         switch (command)
                         {
@@ -58,10 +60,14 @@ namespace db3
                             case "productStat":
                                 controller.GetProductStatistics();
                                 break;
+                            case "prediction":
+                                controller.Prediction();
+                                break;
                             default:
                                 WriteLine("Such a command does not exist, please try again");
                                 break;
                         }
+                        WriteLine();
 
                     }
                     else if (command.Trim() == "exit")
@@ -85,6 +91,7 @@ namespace db3
         {
             WriteLine("What do you want to do with the customer? ('add' / 'delete' / 'edit'/ 'generate' / 'find') or 'exit' ");
             string command = ReadLine().Trim();
+            WriteLine();
 
             switch (command)
             {
@@ -110,12 +117,14 @@ namespace db3
                     break;
 
             }
+            WriteLine();
 
         }
 
         private void DoActionsWithProduct()
         {
             WriteLine("What do you want to do with the product? ('add' / 'delete' / 'edit'/ 'generate'/ 'find' / 'filter') or 'exit' ");
+            WriteLine();
             string command = ReadLine().Trim();
             switch (command)
             {
@@ -144,6 +153,7 @@ namespace db3
                     break;
 
             }
+            WriteLine();
 
         }
         private void DoActionsWithOrder()
@@ -181,6 +191,8 @@ namespace db3
                     break;
 
             }
+            WriteLine();
+
 
         }
     }

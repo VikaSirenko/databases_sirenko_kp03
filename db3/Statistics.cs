@@ -2,6 +2,8 @@ using System;
 using ScottPlot;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.ML;
+using Microsoft.ML.Data;
 
 namespace db3
 {
@@ -153,5 +155,23 @@ namespace db3
             }
 
         }
+
+        
     }
+
+    public class PredictionData
+    {
+        public float Price { get; set; }
+        public float NumberOfPurchases { get; set; }
+    }
+
+    public class Prediction
+    {
+        [ColumnName("Score")]
+        public float NumberOfPurchases { get; set; }
+    }
+
+
+
+
 }

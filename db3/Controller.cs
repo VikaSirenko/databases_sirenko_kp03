@@ -4,6 +4,8 @@ using MySqlConnector;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using Microsoft.ML;
+
 namespace db3
 {
     public class Controller
@@ -28,19 +30,26 @@ namespace db3
             customer.username = ReadLine();
             WriteLine("Enter the customers's address");
             customer.address = ReadLine();
-            WriteLine("Enter the customers's phone number (the number consists of 10 digits)");
-            customer.phone_number = CheckPhoneNumber(ReadLine()).ToString();
-            if (!String.IsNullOrEmpty(customer.username) && !String.IsNullOrEmpty(customer.address) && customer.phone_number != "0")
+            if (!String.IsNullOrEmpty(customer.username) && !String.IsNullOrEmpty(customer.address))
             {
-                try
+                WriteLine("Enter the customers's phone number (the number consists of 10 digits)");
+                customer.phone_number = CheckPhoneNumber(ReadLine()).ToString();
+                if (customer.phone_number != "0")
                 {
-                    customer.id = (long)customerRepository.Insert(customer);
-                    WriteLine($"Customer added to the database with id [{customer.id}]");
+                    try
+                    {
+                        customer.id = (long)customerRepository.Insert(customer);
+                        WriteLine($"Customer added to the database with id [{customer.id}]");
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteLine("the customer could not be added to the database");
+                        WriteLine("ERROR:    " + ex.Message);
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    WriteLine("the customer could not be added to the database");
-                    WriteLine("ERROR:    " + ex.Message);
+                    WriteLine("The phone number was entered incorrectly");
                 }
             }
             else
@@ -743,6 +752,42 @@ namespace db3
             }
 
         }
+
+
+        public void Prediction()
+        {
+            MLContext context = new MLContext();
+            Dictionary<int, int> dict = Statistics.GetTopTenProducts(productRepository, purchaseRepository);
+            PredictionData[] predictionData = new PredictionData[dict.Count];
+            int i = 0;
+            float prodPrice;
+            int numOfPurchase;
+            foreach (KeyValuePair<int, int> keyValue in dict)
+            {
+                prodPrice = (float)productRepository.GetProductById(keyValue.Key).price;
+                numOfPurchase = keyValue.Value;
+                predictionData[i] = new PredictionData { Price = prodPrice, NumberOfPurchases = numOfPurchase };
+                i++;
+            }
+
+            IDataView trainingData = context.Data.LoadFromEnumerable<PredictionData>(predictionData);
+            var pipeline = context.Transforms.Concatenate("Features", new[] { "Price" }).Append(context.Regression.Trainers.Sdca(labelColumnName: "NumberOfPurchases", maximumNumberOfIterations: 100));
+            var model = pipeline.Fit(trainingData);
+            WriteLine("Enter the price for which you want to make a prediction:");
+            float enterPrice;
+            bool isPrice = float.TryParse(ReadLine(), out enterPrice);
+            if (isPrice)
+            {
+                var price = new PredictionData() { Price = enterPrice };
+                var numberOfPurchases = context.Model.CreatePredictionEngine<PredictionData, Prediction>(model).Predict(price);
+                WriteLine($"Predicted number of purchases for price: [{price.Price}]  =  {(int)numberOfPurchases.NumberOfPurchases}");
+            }
+            else
+            {
+                WriteLine("The price is entered incorrectly");
+            }
+        }
+
 
     }
 }
